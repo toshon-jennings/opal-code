@@ -1,0 +1,179 @@
+{
+  "name": "opalcode-vscode",
+  "displayName": "OpalCode",
+  "description": "Practical VS Code companion for OpalCode with project-aware launch behavior and a real Control Center.",
+  "version": "0.2.0",
+  "publisher": "devnull-bootloader",
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "Themes",
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:opalcode.start",
+    "onCommand:opalcode.startInWorkspaceRoot",
+    "onCommand:opalcode.openDocs",
+    "onCommand:opalcode.openSetupDocs",
+    "onCommand:opalcode.openWorkspaceProfile",
+    "onCommand:opalcode.openControlCenter",
+    "onCommand:opalcode.newChat",
+    "onCommand:opalcode.openChat",
+    "onCommand:opalcode.resumeSession",
+    "onCommand:opalcode.abortChat",
+    "onView:opalcode.controlCenter",
+    "onView:opalcode.chat"
+  ],
+  "main": "./src/extension.js",
+  "files": [
+    "README.md",
+    "media/**",
+    "src/extension.js",
+    "src/presentation.js",
+    "src/state.js",
+    "src/chat/**",
+    "themes/**"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "opalcode.start",
+        "title": "OpalCode: Launch in Terminal",
+        "category": "OpalCode"
+      },
+      {
+        "command": "opalcode.startInWorkspaceRoot",
+        "title": "OpalCode: Launch in Workspace Root",
+        "category": "OpalCode"
+      },
+      {
+        "command": "opalcode.openDocs",
+        "title": "OpalCode: Open Repository",
+        "category": "OpalCode"
+      },
+      {
+        "command": "opalcode.openSetupDocs",
+        "title": "OpalCode: Open Setup Guide",
+        "category": "OpalCode"
+      },
+      {
+        "command": "opalcode.openWorkspaceProfile",
+        "title": "OpalCode: Open Workspace Profile",
+        "category": "OpalCode"
+      },
+      {
+        "command": "opalcode.openControlCenter",
+        "title": "OpalCode: Open Control Center",
+        "category": "OpalCode"
+      },
+      {
+        "command": "opalcode.newChat",
+        "title": "OpalCode: New Chat",
+        "category": "OpalCode"
+      },
+      {
+        "command": "opalcode.openChat",
+        "title": "OpalCode: Open Chat Panel",
+        "category": "OpalCode"
+      },
+      {
+        "command": "opalcode.resumeSession",
+        "title": "OpalCode: Resume Session",
+        "category": "OpalCode"
+      },
+      {
+        "command": "opalcode.abortChat",
+        "title": "OpalCode: Abort Generation",
+        "category": "OpalCode"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "opalcode",
+          "title": "OpalCode",
+          "icon": "media/opalcode.svg"
+        }
+      ]
+    },
+    "views": {
+      "opalcode": [
+        {
+          "id": "opalcode.chat",
+          "name": "Chat",
+          "type": "webview"
+        },
+        {
+          "id": "opalcode.controlCenter",
+          "name": "Control Center",
+          "type": "webview"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "opalcode.openChat",
+        "key": "ctrl+shift+l",
+        "mac": "cmd+shift+l"
+      }
+    ],
+    "configuration": {
+      "title": "OpalCode",
+      "properties": {
+        "opalcode.launchCommand": {
+          "type": "string",
+          "default": "opalcode",
+          "description": "Command run in the integrated terminal when launching OpalCode."
+        },
+        "opalcode.terminalName": {
+          "type": "string",
+          "default": "OpalCode",
+          "description": "Integrated terminal tab name for OpalCode sessions."
+        },
+        "opalcode.useOpenAIShim": {
+          "type": "boolean",
+          "default": false,
+          "description": "Optionally set CLAUDE_CODE_USE_OPENAI=1 in launched OpalCode terminals."
+        },
+        "opalcode.permissionMode": {
+          "type": "string",
+          "default": "acceptEdits",
+          "enum": ["default", "acceptEdits", "bypassPermissions", "plan"],
+          "enumDescriptions": [
+            "Prompt for permission on each tool use (requires manual approval)",
+            "Auto-approve file edits, prompt for other operations (recommended)",
+            "Auto-approve all operations without prompting",
+            "Read-only mode — no file modifications allowed"
+          ],
+          "description": "Permission mode for chat sessions. Controls which tool operations are auto-approved."
+        }
+      }
+    },
+    "themes": [
+      {
+        "label": "OpalCode Terminal Black",
+        "uiTheme": "vs-dark",
+        "path": "./themes/OpalCode-Terminal-Black.json"
+      }
+    ]
+  },
+  "scripts": {
+    "test": "node --test ./src/*.test.js",
+    "lint": "node scripts/lint.js",
+    "package": "npx @vscode/vsce package --no-dependencies"
+  },
+  "keywords": [
+    "opalcode",
+    "terminal",
+    "theme",
+    "cli",
+    "llm"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Gitlawb/opalcode"
+  },
+  "license": "MIT"
+}

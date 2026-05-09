@@ -64,7 +64,7 @@ mock.module('./marketplaceHelpers.js', () => ({
 
 mock.module('./marketplaceManager.js', () => ({
   addMarketplaceSource,
-  getMarketplacesCacheDir: () => '/tmp/openclaude-marketplaces',
+  getMarketplacesCacheDir: () => '/tmp/opalcode-marketplaces',
   loadKnownMarketplacesConfig: async () => knownMarketplaces,
   saveKnownMarketplacesConfig,
 }))
@@ -107,7 +107,7 @@ describe('checkAndInstallOfficialMarketplace', () => {
   test('uses known marketplaces as the installed source of truth', async () => {
     knownMarketplaces = {
       'claude-plugins-official': {
-        installLocation: '/tmp/openclaude-marketplaces/claude-plugins-official',
+        installLocation: '/tmp/opalcode-marketplaces/claude-plugins-official',
       },
     }
 

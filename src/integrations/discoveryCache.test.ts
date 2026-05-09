@@ -31,7 +31,7 @@ function createModel(id: string): ModelCatalogEntry {
 }
 
 beforeEach(async () => {
-  tempDir = mkdtempSync(join(tmpdir(), 'openclaude-discovery-cache-test-'))
+  tempDir = mkdtempSync(join(tmpdir(), 'opalcode-discovery-cache-test-'))
   process.env.CLAUDE_CONFIG_DIR = tempDir
   setOriginalFsImplementation()
   await clearDiscoveryCache()

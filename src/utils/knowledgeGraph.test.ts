@@ -17,7 +17,7 @@ import { getFsImplementation } from './fsOperations.js'
 
 describe('KnowledgeGraph Global Persistence & RAG', () => {
   const originalConfigDir = process.env.CLAUDE_CONFIG_DIR
-  const configDir = mkdtempSync(join(tmpdir(), 'openclaude-knowledge-graph-'))
+  const configDir = mkdtempSync(join(tmpdir(), 'opalcode-knowledge-graph-'))
   process.env.CLAUDE_CONFIG_DIR = configDir
   const cwd = getFsImplementation().cwd()
   const graphPath = getProjectGraphPath(cwd)
@@ -65,11 +65,11 @@ describe('KnowledgeGraph Global Persistence & RAG', () => {
   })
 
   it('deduplicates entities and updates attributes', () => {
-    addGlobalEntity('tool', 'openclaude', { status: 'alpha' })
-    addGlobalEntity('tool', 'openclaude', { status: 'beta', version: '0.6.0' })
+    addGlobalEntity('tool', 'opalcode', { status: 'alpha' })
+    addGlobalEntity('tool', 'opalcode', { status: 'beta', version: '0.6.0' })
 
     const graph = loadProjectGraph(cwd)
-    const entities = Object.values(graph.entities).filter(e => e.name === 'openclaude')
+    const entities = Object.values(graph.entities).filter(e => e.name === 'opalcode')
     expect(entities.length).toBe(1)
     expect(entities[0].attributes.status).toBe('beta')
     expect(entities[0].attributes.version).toBe('0.6.0')

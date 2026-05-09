@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "openclaude-web",
+      "name": "opalcode-web",
       "dependencies": {
         "@types/react": "19.2.14",
         "@types/react-dom": "19.2.3",
