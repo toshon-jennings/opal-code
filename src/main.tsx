@@ -3090,7 +3090,7 @@ async function run(): Promise<CommanderCommand> {
       cliAgents,
       initialState
     };
-    if (options.continue) {
+      if (options.continue) {
       // Continue the most recent conversation directly
       let resumeSucceeded = false;
       try {
@@ -4332,7 +4332,7 @@ async function run(): Promise<CommanderCommand> {
   }
 
   // Doctor command - check installation health
-  program.command('doctor').description('Check the health of your OpalCode auto-updater. Note: The workspace trust dialog is skipped and stdio servers from .mcp.json are spawned for health checks. Only use this command in directories you trust.').action(async () => {
+  program.command('doctor').description('Check OpalCode installation, dependencies, providers, and local LLM health. Note: The workspace trust dialog is skipped and stdio servers from .mcp.json are spawned for health checks. Only use this command in directories you trust.').action(async () => {
     const [{
       doctorHandler
     }, {

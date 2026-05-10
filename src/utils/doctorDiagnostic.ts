@@ -33,6 +33,16 @@ import {
 } from './nativeInstaller/packageManagers.js'
 import { getPlatform } from './platform.js'
 import { getRipgrepStatus } from './ripgrep.js'
+import {
+  DEFAULT_ATOMIC_CHAT_BASE_URL,
+  DEFAULT_OLLAMA_BASE_URL,
+  getAtomicChatChatBaseUrl,
+  getOllamaChatBaseUrl,
+  listOpenAICompatibleModels,
+  probeAtomicChatReadiness,
+  probeOllamaGenerationReadiness,
+} from './providerDiscovery.js'
+import { getProviderProfiles } from './providerProfiles.js'
 import { SandboxManager } from './sandbox/sandbox-adapter.js'
 import { getManagedFilePath } from './settings/managedPath.js'
 import { CUSTOMIZATION_SURFACES } from './settings/types.js'
@@ -43,6 +53,9 @@ import {
 } from './shellConfig.js'
 import { jsonParse } from './slowOperations.js'
 import { which } from './which.js'
+import { probeRouteReadiness } from '../integrations/discoveryService.js'
+import { getRouteLabel, resolveRouteIdFromBaseUrl } from '../integrations/routeMetadata.js'
+import { resolveProviderRequest } from '../services/api/providerConfig.js'
 
 function getCliBinaryName(): string {
   return MACRO.PACKAGE_URL === '@anthropic-ai/claude-code'
@@ -79,6 +92,36 @@ export type DiagnosticInfo = {
     mode: 'system' | 'builtin' | 'embedded'
     systemPath: string | null
   }
+  systemDependencies: Array<{
+    name: string
+    command: string
+    status: 'ok' | 'missing' | 'warning'
+    detail?: string
+  }>
+  providerHealth: Array<{
+    label: string
+    source: 'saved-profile' | 'active-env'
+    endpoint?: string
+    model?: string
+    status:
+      | 'ready'
+      | 'unreachable'
+      | 'no_models'
+      | 'generation_failed'
+      | 'unsupported'
+    detail?: string
+  }>
+  localLlmHealth: Array<{
+    label: string
+    endpoint: string
+    status:
+      | 'ready'
+      | 'unreachable'
+      | 'no_models'
+      | 'generation_failed'
+      | 'unsupported'
+    detail?: string
+  }>
 }
 
 function getNormalizedPaths(): [invokedPath: string, execPath: string] {
@@ -533,6 +576,306 @@ export function detectLinuxGlobPatternWarnings(): Array<{
   return warnings
 }
 
+async function probeSavedProviderHealth(
+  profile: ReturnType<typeof getProviderProfiles>[number],
+): Promise<DiagnosticInfo['providerHealth'][number]> {
+  const routeId = resolveRouteIdFromBaseUrl(profile.baseUrl)
+  const label = profile.name
+  const apiKey =
+    profile.apiKey ??
+    process.env.OPENAI_API_KEY ??
+    process.env.GITHUB_TOKEN ??
+    process.env.GH_TOKEN ??
+    process.env.GEMINI_API_KEY ??
+    process.env.MISTRAL_API_KEY
+
+  if (routeId) {
+    const readiness = await probeRouteReadiness(routeId, {
+      baseUrl: profile.baseUrl,
+      model: profile.model,
+      apiKey,
+      timeoutMs: 8000,
+    })
+    if (readiness) {
+      if (readiness.state === 'ready') {
+        return {
+          label,
+          source: 'saved-profile',
+          endpoint: profile.baseUrl,
+          model: profile.model,
+          status: 'ready',
+          detail:
+            readiness.models.length > 0
+              ? `models available: ${readiness.models.length}`
+              : undefined,
+        }
+      }
+      if (readiness.state === 'no_models') {
+        return {
+          label,
+          source: 'saved-profile',
+          endpoint: profile.baseUrl,
+          model: profile.model,
+          status: 'no_models',
+          detail: 'the endpoint is reachable but no models were returned',
+        }
+      }
+      if (readiness.state === 'generation_failed') {
+        return {
+          label,
+          source: 'saved-profile',
+          endpoint: profile.baseUrl,
+          model: profile.model,
+          status: 'generation_failed',
+          detail: readiness.detail,
+        }
+      }
+      return {
+        label,
+        source: 'saved-profile',
+        endpoint: profile.baseUrl,
+        model: profile.model,
+        status: 'unreachable',
+      }
+    }
+  }
+
+  const models = await listOpenAICompatibleModels({
+    baseUrl: profile.baseUrl,
+    apiKey,
+  })
+  if (models === null) {
+    return {
+      label,
+      source: 'saved-profile',
+      endpoint: profile.baseUrl,
+      model: profile.model,
+      status: 'unreachable',
+      detail: 'could not fetch /models',
+    }
+  }
+  if (models.length === 0) {
+    return {
+      label,
+      source: 'saved-profile',
+      endpoint: profile.baseUrl,
+      model: profile.model,
+      status: 'no_models',
+      detail: 'the endpoint returned no models',
+    }
+  }
+
+  return {
+    label,
+    source: 'saved-profile',
+    endpoint: profile.baseUrl,
+    model: profile.model,
+    status: 'ready',
+    detail: `models available: ${models.length}`,
+  }
+}
+
+async function probeActiveProviderHealth(): Promise<
+  DiagnosticInfo['providerHealth'][number] | null
+> {
+  const request = resolveProviderRequest()
+  const routeId = resolveRouteIdFromBaseUrl(request.baseUrl)
+  const label = routeId ? getRouteLabel(routeId) ?? request.baseUrl : request.baseUrl
+  const apiKey =
+    process.env.OPENAI_API_KEY ??
+    process.env.GITHUB_TOKEN ??
+    process.env.GH_TOKEN ??
+    process.env.GEMINI_API_KEY ??
+    process.env.MISTRAL_API_KEY
+
+  if (routeId) {
+    const readiness = await probeRouteReadiness(routeId, {
+      baseUrl: request.baseUrl,
+      model: request.requestedModel,
+      apiKey,
+      timeoutMs: 8000,
+    })
+    if (readiness) {
+      if (readiness.state === 'ready') {
+        return {
+          label,
+          source: 'active-env',
+          endpoint: request.baseUrl,
+          model: request.requestedModel,
+          status: 'ready',
+        }
+      }
+      if (readiness.state === 'no_models') {
+        return {
+          label,
+          source: 'active-env',
+          endpoint: request.baseUrl,
+          model: request.requestedModel,
+          status: 'no_models',
+          detail: 'the endpoint is reachable but no models were returned',
+        }
+      }
+      if (readiness.state === 'generation_failed') {
+        return {
+          label,
+          source: 'active-env',
+          endpoint: request.baseUrl,
+          model: request.requestedModel,
+          status: 'generation_failed',
+          detail: readiness.detail,
+        }
+      }
+      return {
+        label,
+        source: 'active-env',
+        endpoint: request.baseUrl,
+        model: request.requestedModel,
+        status: 'unreachable',
+      }
+    }
+  }
+
+  const models = await listOpenAICompatibleModels({
+    baseUrl: request.baseUrl,
+    apiKey,
+  })
+  if (models === null) {
+    return {
+      label,
+      source: 'active-env',
+      endpoint: request.baseUrl,
+      model: request.requestedModel,
+      status: 'unsupported',
+      detail: 'no direct probe is available for this provider',
+    }
+  }
+  if (models.length === 0) {
+    return {
+      label,
+      source: 'active-env',
+      endpoint: request.baseUrl,
+      model: request.requestedModel,
+      status: 'no_models',
+      detail: 'the endpoint returned no models',
+    }
+  }
+
+  return {
+    label,
+    source: 'active-env',
+    endpoint: request.baseUrl,
+    model: request.requestedModel,
+    status: 'ready',
+    detail: `models available: ${models.length}`,
+  }
+}
+
+async function getSystemDependencies(): Promise<DiagnosticInfo['systemDependencies']> {
+  const rgExecutable = await which('rg')
+  const ripgrepStatus = getRipgrepStatus()
+  return [
+    {
+      name: 'ripgrep',
+      command: 'rg --version',
+      status:
+        ripgrepStatus.mode === 'system' && !ripgrepStatus.working
+          ? 'missing'
+          : 'ok',
+      detail:
+        rgExecutable ??
+        (ripgrepStatus.mode === 'embedded'
+          ? 'using bundled ripgrep'
+          : ripgrepStatus.mode === 'builtin'
+            ? 'using vendored ripgrep'
+            : 'rg is not available on PATH'),
+    },
+  ]
+}
+
+async function getProviderHealthChecks(
+  config = getGlobalConfig(),
+): Promise<DiagnosticInfo['providerHealth']> {
+  const savedProfiles = getProviderProfiles(config)
+  const savedChecks = await Promise.all(savedProfiles.map(probeSavedProviderHealth))
+  const hasConfiguredProviderEnv =
+    Boolean(process.env.CLAUDE_CODE_USE_OPENAI) ||
+    Boolean(process.env.CLAUDE_CODE_USE_GEMINI) ||
+    Boolean(process.env.CLAUDE_CODE_USE_MISTRAL) ||
+    Boolean(process.env.CLAUDE_CODE_USE_GITHUB) ||
+    Boolean(process.env.CLAUDE_CODE_USE_BEDROCK) ||
+    Boolean(process.env.CLAUDE_CODE_USE_VERTEX) ||
+    Boolean(process.env.CLAUDE_CODE_USE_FOUNDRY) ||
+    Boolean(process.env.OPENAI_BASE_URL) ||
+    Boolean(process.env.OPENAI_API_BASE) ||
+    Boolean(process.env.OPENAI_MODEL) ||
+    Boolean(process.env.OPENAI_API_KEY) ||
+    Boolean(process.env.GEMINI_BASE_URL) ||
+    Boolean(process.env.GEMINI_MODEL) ||
+    Boolean(process.env.GEMINI_API_KEY) ||
+    Boolean(process.env.MISTRAL_BASE_URL) ||
+    Boolean(process.env.MISTRAL_MODEL) ||
+    Boolean(process.env.MISTRAL_API_KEY) ||
+    Boolean(process.env.GITHUB_TOKEN) ||
+    Boolean(process.env.GH_TOKEN)
+
+  const activeCheck = hasConfiguredProviderEnv
+    ? await probeActiveProviderHealth()
+    : null
+  const checks = activeCheck ? [...savedChecks, activeCheck] : savedChecks
+  const seen = new Set<string>()
+  return checks.filter(check => {
+    const key = `${check.source}:${check.label}:${check.endpoint ?? ''}:${check.model ?? ''}`
+    if (seen.has(key)) {
+      return false
+    }
+    seen.add(key)
+    return true
+  })
+}
+
+async function getLocalLlmHealthChecks(): Promise<DiagnosticInfo['localLlmHealth']> {
+  const ollama = await probeOllamaGenerationReadiness({
+    baseUrl: process.env.OLLAMA_BASE_URL || DEFAULT_OLLAMA_BASE_URL,
+    timeoutMs: 8000,
+  })
+  const atomicChat = await probeAtomicChatReadiness({
+    baseUrl: process.env.ATOMIC_CHAT_BASE_URL || DEFAULT_ATOMIC_CHAT_BASE_URL,
+  })
+
+  return [
+    {
+      label: 'Ollama',
+      endpoint: getOllamaChatBaseUrl(process.env.OLLAMA_BASE_URL || DEFAULT_OLLAMA_BASE_URL),
+      status: ollama.state,
+      detail:
+        ollama.state === 'ready'
+          ? ollama.probeModel
+            ? `probe model: ${ollama.probeModel}`
+            : 'ready'
+          : ollama.state === 'no_models'
+            ? 'the server is reachable but no models are installed'
+            : ollama.state === 'unreachable'
+              ? 'could not reach the Ollama API'
+              : ollama.detail,
+    },
+    {
+      label: 'Atomic Chat',
+      endpoint: getAtomicChatChatBaseUrl(
+        process.env.ATOMIC_CHAT_BASE_URL || DEFAULT_ATOMIC_CHAT_BASE_URL,
+      ),
+      status: atomicChat.state,
+      detail:
+        atomicChat.state === 'ready'
+          ? atomicChat.models.length > 0
+            ? `models available: ${atomicChat.models.length}`
+            : 'ready'
+          : atomicChat.state === 'no_models'
+            ? 'the server is reachable but no models are loaded'
+            : 'could not reach the Atomic Chat API',
+    },
+  ]
+}
+
 export async function getDoctorDiagnostic(): Promise<DiagnosticInfo> {
   const installationType = await getCurrentInstallationType()
   const version =
@@ -541,6 +884,7 @@ export async function getDoctorDiagnostic(): Promise<DiagnosticInfo> {
   const invokedBinary = getInvokedBinary()
   const multipleInstallations = await detectMultipleInstallations()
   const warnings = await detectConfigurationIssues(installationType)
+  const config = getGlobalConfig()
 
   // Add glob pattern warnings for Linux sandboxing
   warnings.push(...detectLinuxGlobPatternWarnings())
@@ -587,8 +931,6 @@ export async function getDoctorDiagnostic(): Promise<DiagnosticInfo> {
     }
   }
 
-  const config = getGlobalConfig()
-
   // Get config values for display
   const configInstallMethod = config.installMethod || 'not set'
 
@@ -618,6 +960,13 @@ export async function getDoctorDiagnostic(): Promise<DiagnosticInfo> {
       ripgrepStatusRaw.mode === 'system' ? ripgrepStatusRaw.path : null,
   }
 
+  const [systemDependencies, providerHealth, localLlmHealth] =
+    await Promise.all([
+      getSystemDependencies(),
+      getProviderHealthChecks(config),
+      getLocalLlmHealthChecks(),
+    ])
+
   // Get package manager info if running from package manager
   const packageManager =
     installationType === 'package-manager'
@@ -641,6 +990,9 @@ export async function getDoctorDiagnostic(): Promise<DiagnosticInfo> {
     warnings,
     packageManager,
     ripgrepStatus,
+    systemDependencies,
+    providerHealth,
+    localLlmHealth,
   }
 
   return diagnostic

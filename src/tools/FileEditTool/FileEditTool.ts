@@ -488,7 +488,7 @@ export const FileEditTool = buildTool({
     })
 
     // 5. Write to disk
-    writeTextContent(absoluteFilePath, updatedFile, encoding, endings)
+    await writeTextContent(absoluteFilePath, updatedFile, encoding, endings)
 
     // Notify LSP servers about file modification (didChange) and save (didSave)
     const lspManager = getLspServerManager()

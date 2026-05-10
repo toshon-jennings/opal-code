@@ -8,7 +8,7 @@ export type RGB = readonly [number, number, number]
 export type LogoPalette = {
   /** Gradient stops painted top→bottom across the ASCII logo rows. */
   gradient: readonly RGB[]
-  /** Highlight color for tagline, version label, and the ✦ marker. */
+  /** Highlight color for version label and other accent text. */
   accent: RGB
   /** Soft body text color (tagline value, label values). */
   cream: RGB
@@ -19,6 +19,20 @@ export type LogoPalette = {
 }
 
 export const LOGO_PALETTES = {
+  opal: {
+    gradient: [
+      [255, 213, 175], // #FFD5AF — warm amber highlight
+      [253, 186, 116], // #FDBA74 — Accent Hover
+      [251, 146, 60],  // #FB923C — Accent Orange
+      [249, 115, 22],  // #F97316 — slightly deeper
+      [234, 88, 12],   // #EA580C — rich burnt orange
+      [194, 65, 12],   // #C2410C — deep ember
+    ],
+    accent: [251, 146, 60],   // #FB923C Opal Accent Orange
+    cream: [255, 237, 213],   // #FFEDD5 Accent Secondary
+    dim: [161, 161, 170],     // #A1A1AA Text Secondary
+    border: [113, 113, 122],  // #71717A Text Tertiary
+  },
   sunset: {
     gradient: [
       [255, 180, 100],
@@ -81,10 +95,11 @@ export type LogoPaletteName = keyof typeof LOGO_PALETTES
 
 export const LOGO_PALETTE_NAMES = Object.keys(LOGO_PALETTES) as LogoPaletteName[]
 
-export const DEFAULT_LOGO_PALETTE: LogoPaletteName = 'sunset'
+export const DEFAULT_LOGO_PALETTE: LogoPaletteName = 'opal'
 
 export const LOGO_PALETTE_LABELS: Record<LogoPaletteName, string> = {
-  sunset: 'Sunset (default)',
+  opal: 'Opal (default)',
+  sunset: 'Sunset',
   forest: 'Forest green',
   ocean: 'Ocean blue',
   monochrome: 'Monochrome',

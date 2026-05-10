@@ -1,5 +1,5 @@
 import type { Base64ImageSource } from '@anthropic-ai/sdk/resources/index.mjs'
-import { readdir, readFile as readFileAsync } from 'fs/promises'
+import { readdir } from 'fs/promises'
 import * as path from 'path'
 import { posix, win32 } from 'path'
 import { z } from 'zod/v4'
@@ -921,7 +921,9 @@ async function callInner(
       const imageBlocks = await Promise.all(
         imageFiles.map(async f => {
           const imgPath = path.join(extractResult.data.file.outputDir, f)
-          const imgBuffer = await readFileAsync(imgPath)
+          const imgBuffer = Buffer.from(
+            await Bun.file(imgPath).arrayBuffer(),
+          )
           const resized = await maybeResizeAndDownsampleImageBuffer(
             imgBuffer,
             imgBuffer.length,

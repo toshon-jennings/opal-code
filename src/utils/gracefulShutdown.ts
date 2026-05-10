@@ -151,40 +151,33 @@ function printResumeHint(): void {
   if (resumeHintPrinted) {
     return
   }
-  // Only show with TTY, interactive sessions, and persistence
-  if (
-    process.stdout.isTTY &&
-    getIsInteractive() &&
-    !isSessionPersistenceDisabled()
-  ) {
-    try {
-      const sessionId = getSessionId()
-      // Don't show resume hint if no session file exists (e.g., subcommands like `claude update`)
-      if (!sessionIdExists(sessionId)) {
-        return
-      }
-      const customTitle = getCurrentSessionTitle(sessionId)
+  resumeHintPrinted = true
 
-      // Use custom title if available, otherwise fall back to session ID
-      let resumeArg: string
-      if (customTitle) {
-        // Wrap in double quotes, escape backslashes first then quotes
-        const escaped = customTitle.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
-        resumeArg = `"${escaped}"`
-      } else {
-        resumeArg = sessionId
-      }
+  try {
+    const sessionId = getSessionId()
+    if (!sessionId) return
 
-      writeSync(
-        1,
-        chalk.dim(
-          `\nResume this session with:\nopalcode --resume ${resumeArg}\n`,
-        ),
-      )
-      resumeHintPrinted = true
-    } catch {
-      // Ignore write errors
+    // Force color for the hint even if autodetection fails in some runners
+    const originalLevel = chalk.level
+    chalk.level = 3 
+
+    const customTitle = getCurrentSessionTitle(sessionId)
+    let resumeArg: string
+    if (customTitle) {
+      const escaped = customTitle.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
+      resumeArg = `"${escaped}"`
+    } else {
+      resumeArg = sessionId
     }
+
+    const message = `\n${chalk.dim('To resume this session, run:')}\n${chalk.cyan.bold(`opalcode --resume ${resumeArg}`)}\n`
+    
+    writeSync(1, message)
+    
+    // Restore level
+    chalk.level = originalLevel
+  } catch (e) {
+    // Ignore write errors
   }
 }
 /* eslint-enable custom-rules/no-sync-fs */

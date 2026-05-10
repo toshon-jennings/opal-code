@@ -42,6 +42,7 @@ import mobile from './commands/mobile/index.js'
 import onboarding from './commands/onboarding/index.js'
 import pr_comments from './commands/pr_comments/index.js'
 import releaseNotes from './commands/release-notes/index.js'
+import changelog from './commands/changelog/index.js'
 import rename from './commands/rename/index.js'
 import resume from './commands/resume/index.js'
 import review, { ultrareview } from './commands/review.js'
@@ -288,7 +289,7 @@ const COMMANDS = memoize((): Command[] => [
   contextNonInteractive,
   cost,
   diff,
-  dream,
+  ...(dream && typeof dream === 'object' ? [dream] : []),
   doctor,
   effort,
   exit,
@@ -307,13 +308,14 @@ const COMMANDS = memoize((): Command[] => [
   memory,
   mobile,
   model,
-  onboardGithub,
+  onboarding,
   outputStyle,
   remoteEnv,
   plugin,
   provider,
   pr_comments,
   releaseNotes,
+  changelog,
   reloadPlugins,
   rename,
   resume,
@@ -341,7 +343,7 @@ const COMMANDS = memoize((): Command[] => [
   vim,
   wiki,
   ...(webCmd ? [webCmd] : []),
-  ...(forkCmd ? [forkCmd] : []),
+  ...(forkCmd && typeof forkCmd === 'object' ? [forkCmd] : []),
   ...(buddy ? [buddy] : []),
   ...(proactive ? [proactive] : []),
   ...(briefCommand ? [briefCommand] : []),

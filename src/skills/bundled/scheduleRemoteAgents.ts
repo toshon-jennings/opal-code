@@ -327,7 +327,7 @@ export function registerScheduleRemoteAgentsSkill(): void {
     description:
       'Create, update, list, or run scheduled remote agents (triggers) that execute on a cron schedule.',
     whenToUse:
-      'When the user wants to schedule a recurring remote agent, set up automated tasks, create a cron job for Claude Code, or manage their scheduled agents/triggers.',
+      'When the user wants to schedule a recurring remote agent, set up automated tasks, create a cron job for OpalCode, or manage their scheduled agents/triggers.',
     userInvocable: true,
     isEnabled: () =>
       getFeatureValue_CACHED_MAY_BE_STALE('tengu_surreal_dali', false) &&

@@ -307,13 +307,22 @@ h1, h2, h3, p { margin-top: 0; }
 }
 
 .hero-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.05em;
   margin: 0;
   font-size: clamp(2.4rem, 6vw, 4.4rem);
   font-weight: 700;
   line-height: 1;
-  letter-spacing: -0.04em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--ink);
   text-shadow: 0 0 28px var(--hero-glow);
+}
+
+.hero-title span {
+  display: block;
 }
 
 .hero-sub {

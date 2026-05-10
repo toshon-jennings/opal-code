@@ -402,7 +402,7 @@ async function applySedEdit(simulatedEdit: {
 
   // Detect line endings and write new content
   const endings = detectLineEndings(absoluteFilePath);
-  writeTextContent(absoluteFilePath, newContent, encoding, endings);
+  await writeTextContent(absoluteFilePath, newContent, encoding, endings);
 
   // Notify VS Code about the file change
   notifyVscodeFileUpdated(absoluteFilePath, originalContent, newContent);

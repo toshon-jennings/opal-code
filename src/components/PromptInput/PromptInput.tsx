@@ -12,7 +12,6 @@ import type { FooterItem } from 'src/state/AppStateStore.js';
 import { getCwd } from 'src/utils/cwd.js';
 import { isQueuedCommandEditable, popAllEditable } from 'src/utils/messageQueueManager.js';
 import stripAnsi from 'strip-ansi';
-import { companionReservedColumns } from '../../buddy/CompanionSprite.js';
 import { isBuddyEnabled } from '../../buddy/feature.js';
 import { findBuddyTriggerPositions, useBuddyNotification } from '../../buddy/useBuddyNotification.js';
 import { FastModePicker } from '../../commands/fast/fast.js';
@@ -188,6 +187,7 @@ type Props = {
     start: number;
     end: number;
   } | null;
+  availableColumns?: number;
 };
 
 // Bottom slot has maxHeight="50%"; reserve lines for footer, border, status.
@@ -235,7 +235,8 @@ function PromptInput({
   hasSuppressedDialogs,
   isLocalJSXCommandActive = false,
   insertTextRef,
-  voiceInterimRange
+  voiceInterimRange,
+  availableColumns
 }: Props): React.ReactNode {
   const mainLoopModel = useMainLoopModel();
   // A local-jsx command (e.g., /mcp while agent is running) renders a full-
@@ -2018,13 +2019,12 @@ function PromptInput({
     });
   }, [effortNotificationText, addNotification, removeNotification]);
   useBuddyNotification();
-  const companionSpeaking = isBuddyEnabled() ?
-  useAppState(s => s.companionReaction !== undefined) : false;
   const {
     columns,
     rows
   } = useTerminalSize();
-  const textInputColumns = columns - 3 - companionReservedColumns(columns, companionSpeaking);
+  const promptColumns = Math.max(1, availableColumns ?? columns);
+  const textInputColumns = Math.max(1, promptColumns - 3);
 
   // POC: click-to-position-cursor. Mouse tracking is only enabled inside
   // <AlternateScreen>, so this is dormant in the normal main-screen REPL.
@@ -2286,13 +2286,13 @@ function PromptInput({
       {swarmBanner ? <>
           <Text color={swarmBanner.bgColor}>
             {swarmBanner.text ? <>
-                {'─'.repeat(Math.max(0, columns - stringWidth(swarmBanner.text) - 4))}
+                {'─'.repeat(Math.max(0, promptColumns - stringWidth(swarmBanner.text) - 4))}
                 <Text backgroundColor={swarmBanner.bgColor} color="inverseText">
                   {' '}
                   {swarmBanner.text}{' '}
                 </Text>
                 {'──'}
-              </> : '─'.repeat(columns)}
+              </> : '─'.repeat(promptColumns)}
           </Text>
           <Box flexDirection="row" width="100%">
             <PromptInputModeIndicator mode={mode} isLoading={isLoading} viewingAgentName={viewingAgentName} viewingAgentColor={viewingAgentColor} />
@@ -2300,7 +2300,7 @@ function PromptInput({
               {textInputElement}
             </Box>
           </Box>
-          <Text color={swarmBanner.bgColor}>{'─'.repeat(columns)}</Text>
+          <Text color={swarmBanner.bgColor}>{'─'.repeat(promptColumns)}</Text>
         </> : <Box flexDirection="row" alignItems="flex-start" justifyContent="flex-start" borderColor={getBorderColor()} borderStyle="round" borderLeft={false} borderRight={false} borderBottom width="100%" borderText={buildBorderText(showFastIcon ?? false, showFastIconHint, fastModeCooldown)}>
           <PromptInputModeIndicator mode={mode} isLoading={isLoading} viewingAgentName={viewingAgentName} viewingAgentColor={viewingAgentColor} />
           <Box flexGrow={1} flexShrink={1} onClick={handleInputClick}>

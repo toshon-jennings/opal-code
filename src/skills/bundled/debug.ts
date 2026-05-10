@@ -14,7 +14,7 @@ export function registerDebugSkill(): void {
     name: 'debug',
     description:
       process.env.USER_TYPE === 'ant'
-        ? 'Debug your current Claude Code session by reading the session debug log. Includes all event logging'
+        ? 'Debug your current OpalCode session by reading the session debug log. Includes all event logging'
         : 'Enable debug logging for this session and help diagnose issues',
     allowedTools: ['Read', 'Grep', 'Glob'],
     argumentHint: '[issue description]',
@@ -68,7 +68,7 @@ Tell the user that debug logging is now active at \`${debugLogPath}\`, ask them 
 
       const prompt = `# Debug Skill
 
-Help the user debug an issue they're encountering in this current Claude Code session.
+Help the user debug an issue they're encountering in this current OpalCode session.
 ${justEnabledSection}
 ## Session Debug Log
 

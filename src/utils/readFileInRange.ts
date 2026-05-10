@@ -38,7 +38,7 @@
 // ---------------------------------------------------------------------------
 
 import { createReadStream, fstat } from 'fs'
-import { stat as fsStat, readFile } from 'fs/promises'
+import { stat as fsStat } from 'fs/promises'
 import { formatFileSize } from './format.js'
 
 const FAST_PATH_MAX_SIZE = 10 * 1024 * 1024 // 10 MB
@@ -101,7 +101,7 @@ export async function readFileInRange(
       throw new FileTooLargeError(stats.size, maxBytes)
     }
 
-    const text = await readFile(filePath, { encoding: 'utf8', signal })
+    const text = await Bun.file(filePath).text()
     return readFileInRangeFast(
       text,
       stats.mtimeMs,

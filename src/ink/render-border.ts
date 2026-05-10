@@ -43,7 +43,7 @@ function embedTextInBorder(
   const borderLength = borderLine.length
 
   if (textLength >= borderLength - 2) {
-    return ['', text.substring(0, borderLength), '']
+    return [borderLine, '', '']
   }
 
   let position: number

@@ -134,9 +134,10 @@ function Hero() {
         open source · gitlawb-aligned · model-neutral
       </div>
 
-      <h1 id="hero-heading" className="hero-title">
-        runs anywhere.<br />
-        uses anything.
+      <h1 id="hero-heading" className="hero-title" aria-label="Clearer. Cohesive. Closer.">
+        <span aria-hidden="true">C L E A R E R .</span>
+        <span aria-hidden="true">C O H E S I V E .</span>
+        <span aria-hidden="true">C L O S E R .</span>
       </h1>
 
       <p className="hero-sub">

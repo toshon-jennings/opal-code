@@ -353,12 +353,15 @@ export default class Ink {
     // by handleResume (SIGCONT) and the sleep-wake detector; resize itself
     // doesn't exit alt-screen. Do NOT write ERASE_SCREEN: render() below
     // can take ~80ms; erasing first leaves the screen blank that whole time.
-    if (this.altScreenActive && !this.isPaused && this.options.stdout.isTTY) {
-      if (this.altScreenMouseTracking) {
-        this.options.stdout.write(ENABLE_MOUSE_TRACKING);
-      }
-      this.resetFramesForAltScreen();
+    if (this.options.stdout.isTTY) {
       this.needsEraseBeforePaint = true;
+      this.prevFrameContaminated = true;
+      if (this.altScreenActive && !this.isPaused) {
+        if (this.altScreenMouseTracking) {
+          this.options.stdout.write(ENABLE_MOUSE_TRACKING);
+        }
+        this.resetFramesForAltScreen();
+      }
     }
 
     // Re-render the React tree with updated props so the context value changes.

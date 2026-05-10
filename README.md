@@ -4,9 +4,9 @@ OpalCode is an open-source coding-agent CLI for cloud and local model providers.
 
 Use OpenAI-compatible APIs, Gemini, GitHub Models, Codex OAuth, Codex, Ollama, Atomic Chat, and other supported backends while keeping one terminal-first workflow: prompts, tools, agents, MCP, slash commands, and streaming output.
 
-[![PR Checks](https://github.com/Gitlawb/opalcode/actions/workflows/pr-checks.yml/badge.svg?branch=main)](https://github.com/Gitlawb/opalcode/actions/workflows/pr-checks.yml)
-[![Release](https://img.shields.io/github/v/tag/Gitlawb/opalcode?label=release&color=0ea5e9)](https://github.com/Gitlawb/opalcode/tags)
-[![Discussions](https://img.shields.io/badge/discussions-open-7c3aed)](https://github.com/Gitlawb/opalcode/discussions)
+[![PR Checks](https://github.com/toshon-jennings/opal-code/actions/workflows/pr-checks.yml/badge.svg?branch=main)](https://github.com/toshon-jennings/opal-code/actions/workflows/pr-checks.yml)
+[![Release](https://img.shields.io/github/v/tag/toshon-jennings/opal-code?label=release&color=0ea5e9)](https://github.com/toshon-jennings/opal-code/tags)
+[![Discussions](https://img.shields.io/badge/discussions-open-7c3aed)](https://github.com/toshon-jennings/opal-code/discussions)
 [![Security Policy](https://img.shields.io/badge/security-policy-0f766e)](SECURITY.md)
 [![License](https://img.shields.io/badge/license-MIT-2563eb)](LICENSE)
 
@@ -41,7 +41,7 @@ OpalCode is also mirrored to GitLawb:
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/chart?repos=gitlawb/opalcode&type=date&legend=top-left)](https://www.star-history.com/?repos=gitlawb%2Fopalcode&type=date&legend=top-left)
+[![Star History Chart](https://api.star-history.com/chart?repos=toshon-jennings/opal-code&type=date&legend=top-left)](https://www.star-history.com/?repos=toshon-jennings%2Fopal-code&type=date&legend=top-left)
 
 ## Why OpalCode
 
@@ -363,7 +363,7 @@ For larger changes, open an issue first so the scope is clear before implementat
 
 OpalCode is an independent community project and is not affiliated with, endorsed by, or sponsored by Anthropic.
 
-OpalCode originated from the Claude Code codebase and has since been substantially modified to support multiple providers and open use. "Claude" and "Claude Code" are trademarks of Anthropic PBC. See [LICENSE](LICENSE) for details.
+OpalCode is a fork of the [Gitlawb/opalcode](https://github.com/Gitlawb/opalcode) repository and originated from the Claude Code codebase. It has since been substantially modified to support multiple providers and open use. "Claude" and "Claude Code" are trademarks of Anthropic PBC. See [LICENSE](LICENSE) for details.
 
 ## License
 

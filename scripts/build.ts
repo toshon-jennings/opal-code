@@ -8,6 +8,7 @@
  * - src/ path aliases
  */
 
+import { execa } from 'execa'
 import { readFileSync, readdirSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { noTelemetryPlugin } from './no-telemetry-plugin'
@@ -120,6 +121,24 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const) {
 
 let result: Awaited<ReturnType<typeof Bun.build>> | undefined
 let sdkResult: Awaited<ReturnType<typeof Bun.build>> | undefined
+const shouldCompileStandaloneBinary = process.argv.includes('--compile')
+const standaloneBinaryPath =
+  process.platform === 'win32' ? './dist/opalcode.exe' : './dist/opalcode'
+const standaloneCompileExternals = [
+  '@aws-sdk/client-bedrock',
+  '@aws-sdk/client-bedrock-runtime',
+  '@aws-sdk/client-sts',
+  '@aws-sdk/credential-providers',
+  '@azure/identity',
+  '@opentelemetry/exporter-trace-otlp-http',
+  '@opentelemetry/exporter-trace-otlp-proto',
+  '@opentelemetry/exporter-logs-otlp-proto',
+  '@opentelemetry/exporter-logs-otlp-grpc',
+  '@opentelemetry/exporter-metrics-otlp-proto',
+  '@opentelemetry/exporter-metrics-otlp-grpc',
+  '@opentelemetry/exporter-metrics-otlp-http',
+  '@opentelemetry/exporter-prometheus',
+]
 
 try {
 
@@ -890,6 +909,34 @@ if (!sdkResult.success) {
   process.exitCode = 1
 } else {
   console.log(`✓ Built SDK bundle → dist/sdk.mjs`)
+}
+
+if (shouldCompileStandaloneBinary && result.success) {
+  console.log('Building standalone binary...')
+  const standaloneExternalArgs = standaloneCompileExternals.flatMap(mod => [
+    '--external',
+    mod,
+  ])
+  const compileResult = await execa(
+    'bun',
+    [
+      'build',
+      '--compile',
+      '--outfile',
+      standaloneBinaryPath,
+      ...standaloneExternalArgs,
+      './dist/cli.mjs',
+    ],
+    {
+      stdio: 'inherit',
+      reject: false,
+    },
+  )
+  if (compileResult.exitCode !== 0) {
+    process.exitCode = 1
+  } else {
+    console.log(`✓ Built standalone binary → ${standaloneBinaryPath}`)
+  }
 }
 
 } finally {

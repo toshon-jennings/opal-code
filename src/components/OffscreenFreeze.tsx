@@ -1,7 +1,8 @@
-import React, { useContext, useRef } from 'react';
+import React, { useContext, useRef, useMemo } from 'react';
 import { useTerminalViewport } from '../ink/hooks/use-terminal-viewport.js';
 import { Box } from '../ink.js';
 import { InVirtualListContext } from './messageActions.js';
+import { useTerminalSize } from '../hooks/useTerminalSize.js';
 type Props = {
   children: React.ReactNode;
 };
@@ -28,10 +29,22 @@ export function OffscreenFreeze({
   'use no memo';
 
   const inVirtualList = useContext(InVirtualListContext);
+  const { columns, rows } = useTerminalSize();
   const [ref, {
     isVisible
   }] = useTerminalViewport();
   const cached = useRef(children);
+  const lastSize = useRef({ columns, rows });
+
+  // If the terminal was resized, invalidate the freeze cache.
+  // Terminal reflow means the old rendered content is likely garbled or
+  // wrongly positioned at the new width.
+  const sizeChanged = lastSize.current.columns !== columns || lastSize.current.rows !== rows;
+  if (sizeChanged) {
+    lastSize.current = { columns, rows };
+    cached.current = children;
+  }
+
   // Virtual list has no terminal scrollback — the ScrollBox clips inside the
   // viewport, so there's nothing to freeze. Freezing there also blocks
   // click-to-expand since useTerminalViewport's visibility calc can disagree

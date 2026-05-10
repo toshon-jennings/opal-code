@@ -81,12 +81,12 @@ export async function getFileModificationTimeAsync(
   return Math.floor(s.mtimeMs)
 }
 
-export function writeTextContent(
+export async function writeTextContent(
   filePath: string,
   content: string,
   encoding: BufferEncoding,
   endings: LineEndingType,
-): void {
+): Promise<void> {
   let toWrite = content
   if (endings === 'CRLF') {
     // Normalize any existing CRLF to LF first so a new_string that already
@@ -94,7 +94,7 @@ export function writeTextContent(
     toWrite = content.replaceAll('\r\n', '\n').split('\n').join('\r\n')
   }
 
-  writeFileSyncAndFlush_DEPRECATED(filePath, toWrite, { encoding })
+  await Bun.write(filePath, Buffer.from(toWrite, encoding))
 }
 
 export function detectFileEncoding(filePath: string): BufferEncoding {
